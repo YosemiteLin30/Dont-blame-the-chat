@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Control Panel - Don't Blame the Chat</title>
+<style>
+  :root { --bg:#0e0c18; --card:#171428; --line:#2d2850; --text:#e2deff; --dim:#8f89bd; --acc:#a78bfa; --ok:#6ee7a8; --bad:#fb7185; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.45 ui-monospace, Menlo, Consolas, monospace; }
+  main { max-width:900px; margin:0 auto; padding:16px; display:grid; gap:14px; grid-template-columns:1fr 1fr; }
+  @media (max-width:760px) { main { grid-template-columns:1fr; } }
+  h1 { grid-column:1/-1; margin:0; font-size:20px; letter-spacing:.06em; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px 14px; }
+  h2 { margin:0 0 8px; font-size:12px; color:var(--acc); letter-spacing:.1em; text-transform:uppercase; }
+  button { font:inherit; color:var(--text); background:#3b2a8f; border:1px solid #6d56d6; border-radius:6px; padding:8px 12px; margin:0 6px 6px 0; cursor:pointer; min-height:38px; }
+  button.quiet { background:#1d1a3a; border-color:var(--line); }
+  button:focus-visible { outline:2px solid var(--acc); outline-offset:2px; }
+  .row { display:flex; justify-content:space-between; gap:8px; padding:2px 0; }
+  .dim { color:var(--dim); } .ok { color:var(--ok); } .bad { color:var(--bad); }
+  ul { list-style:none; margin:0; padding:0; max-height:260px; overflow:auto; }
+  li { padding:2px 0; border-bottom:1px solid #221e40; }
+  #conn { font-size:12px; }
+</style></head>
+<body><main>
+<h1>Don't Blame the Chat, Blame the Game <span id="conn" class="dim">connecting...</span></h1>
+<section class="card"><h2>Game</h2>
+  <div class="row"><span>Phase</span><b id="phase">-</b></div>
+  <div class="row"><span>Time</span><b id="elapsed">-</b></div>
+  <div class="row"><span>Player room</span><b id="room">-</b></div>
+  <div class="row"><span>Digits found</span><b id="digits">-</b></div>
+  <div class="row"><span>Angels</span><span id="angels" class="dim">-</span></div>
+  <p><button id="restart" class="quiet" type="button">New game</button></p>
+</section>
+<section class="card"><h2>Chat commands (test from here)</h2>
+  <div id="cmds"></div>
+  <p class="dim" style="margin:6px 0 0">Active: <span id="effects">none</span></p>
+</section>
+<section class="card" style="grid-column:1/-1"><h2>Event log</h2><ul id="log"></ul></section>
+</main>
+<script>
+const NAMES = ["lock", "shuffle", "blackout", "chaos", "speed"];
+const $ = id => document.getElementById(id);
+let ws, state = {};
+NAMES.forEach(n => {
+  const b = document.createElement("button");
+  b.type = "button"; b.id = "btn-" + n; b.textContent = "!" + n;
+  b.onclick = () => ws && ws.readyState === 1 && ws.send(JSON.stringify({cmd: n}));
+  $("cmds").appendChild(b);
+});
+$("restart").onclick = () => ws && ws.readyState === 1 && ws.send(JSON.stringify({cmd: "restart"}));
+function render(s) {
+  state = s;
+  $("phase").textContent = s.phase;
+  $("elapsed").textContent = (s.elapsed ?? 0) + " s";
+  $("room").textContent = s.player_room ?? "-";
+  $("digits").textContent = (s.digits_found ?? 0) + " / " + (s.digits_total ?? 3);
+  $("angels").textContent = (s.angels || []).map(a => "#" + a.id + " room " + a.room + " " + a.state).join(" | ") || "-";
+  NAMES.forEach(n => {
+    const cd = (s.cooldowns || {})[n] || 0;
+    $("btn-" + n).textContent = "!" + n + (cd > 0 ? " (" + Math.ceil(cd) + "s)" : "");
+    $("btn-" + n).disabled = cd > 0;
+  });
+  $("effects").textContent = (s.effects || []).map(e => e.name + " " + e.left + "s").join(", ") || "none";
+  $("log").replaceChildren(...(s.log || []).map(l => {
+    const li = document.createElement("li");
+    li.className = l.ok ? "" : "bad"; li.textContent = l.t + "  " + l.text; return li;
+  }));
+}
+function connect() {
+  ws = new WebSocket((location.protocol === "https:" ? "wss" : "ws") + "://" + location.host + "/ws");
+  ws.onopen = () => { $("conn").textContent = "connected"; };
+  ws.onmessage = e => render(JSON.parse(e.data));
+  ws.onclose = () => { $("conn").textContent = "reconnecting..."; setTimeout(connect, 1500); };
+}
+connect();
+</script></body></html>

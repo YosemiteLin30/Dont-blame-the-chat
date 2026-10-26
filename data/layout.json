@@ -1,0 +1,13 @@
+{
+  "grid": 3,
+  "room_w": 320,
+  "room_h": 216,
+  "wall": 8,
+  "door_w": 64,
+  "hud_h": 112,
+  "start_room": 5,
+  "exit_room": 6,
+  "angel_spawn_rooms": [1, 3, 7, 9],
+  "digit_rooms": [1, 2, 3, 4, 6, 7, 8, 9],
+  "digit_spawns": [[0.12, 0.2], [0.88, 0.2], [0.12, 0.8], [0.88, 0.8]]
+}

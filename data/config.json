@@ -1,0 +1,15 @@
+{
+  "player": {"speed": 170, "radius": 9},
+  "flashlight": {"angle_deg": 60, "narrow_angle_deg": 40, "range": 230, "ambient": 38},
+  "angels": {"count": 3, "speed": 62, "radius": 11, "touch_dist": 20, "speed_boost": 1.3},
+  "digits": {"count": 3, "pickup_dist": 30},
+  "exit": {"touch_dist": 34, "interact_dist": 60},
+  "events": {
+    "lock":     {"cooldown": 10, "duration": 2},
+    "shuffle":  {"cooldown": 20, "duration": 3},
+    "blackout": {"cooldown": 5,  "duration": 3},
+    "chaos":    {"cooldown": 30, "duration": 3},
+    "speed":    {"cooldown": 20, "duration": 8}
+  },
+  "chat": {"per_user_cooldown": 3}
+}
